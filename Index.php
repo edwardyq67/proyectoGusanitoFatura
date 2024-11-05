@@ -30,7 +30,9 @@
                 case 'cliente':
                     include('./view/Cliente.php');
                     break;
-
+                    case 'historialCliente':
+                        include('./view/HistorialCliente.php');
+                        break;
                 default:
                     include('./view/Inicio.php');
             }

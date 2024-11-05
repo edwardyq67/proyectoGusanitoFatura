@@ -1,63 +1,15 @@
-<?php
+<?php 
 include('conexion.php');
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Inserción de un nuevo cliente
-    if (isset($_POST['nombre']) && isset($_POST['apellido']) && isset($_POST['telefono']) && isset($_POST['correo'])) {
-        $nombre = $_POST['nombre'];
-        $apellido = $_POST['apellido'];
-        $telefono = $_POST['telefono'];
-        $correo = $_POST['correo'];
-
-        $sql = "INSERT INTO cliente (nombre, apelldio, cel, correo) VALUES (:nombre, :apellido, :telefono, :correo)";
-
-        try {
-            $stmt = $conn->prepare($sql);
-            $stmt->bindParam(':nombre', $nombre);
-            $stmt->bindParam(':apellido', $apellido);
-            $stmt->bindParam(':telefono', $telefono);
-            $stmt->bindParam(':correo', $correo);
-            $stmt->execute();
-        } catch (PDOException $e) {
-            echo "Error al insertar el registro: " . $e->getMessage();
-        }
-    }
-
-    // Eliminación de un cliente
-    if (isset($_POST['cliente_id'])) {
-        $cliente_id = $_POST['cliente_id'];
-
-        $sql = "DELETE FROM cliente WHERE id = :cliente_id";
-
-        try {
-            $stmt = $conn->prepare($sql);
-            $stmt->bindParam(':cliente_id', $cliente_id, PDO::PARAM_INT);
-            $stmt->execute();
-            header("Location: index.php?page=cliente"); // Redirigir después de eliminar
-            exit();
-        } catch (PDOException $e) {
-            echo "Error al eliminar el cliente: " . $e->getMessage();
-        }
-    }
-}
-
-// Consulta para obtener todos los clientes
 $sql = "SELECT * FROM cliente";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
 <div id="contenido" class="flex flex-col gap-5">
     <section class="bg-slate-50 rounded-md py-4 px-4 flex gap-4 items-center">
         <button id="openModal" class="py-1 px-3 rounded-md bg-green-600 text-white hover:bg-green-500 transition-all duration-200">
-            Crear
+            Crear Factura
         </button>
-        <form action="" class="relative flex items-center text-sm">
-            <label for="Buscar" class="font-bold mr-2">Buscar: </label>
-            <input id="Buscar" type="text" class="bg-zinc-200 focus:outline-none rounded-md py-1 pl-3 ">
-            <i class="fa-solid fa-magnifying-glass absolute right-0 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-800 transition-all duration-200 px-3"></i>
-        </form>
         <form action="" class="flex gap-4 items-center text-sm">
             <div class="flex items-center">
                 <label for="" class="font-bold mr-2">Desde:</label>
@@ -69,6 +21,29 @@ $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </form>
     </section>
+    <div class="bg-slate-50 rounded-md pt-4 px-4 flex flex-col gap-4 items-center">
+
+        <button id="accordionButton" class="flex justify-between w-full items-center ">
+            <strong>Información del Cliente</strong>
+            <i id="accordionIcon" class="fa-solid fa-caret-down"></i>
+        </button>
+
+        <div id="accordionContent" class="w-full block overflow-hidden">
+        <?php foreach ($resultados as $index => $cliente): ?>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading<?php echo $index; ?>">
+                <div class="accordion-button text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?php echo $index; ?>" aria-expanded="true" aria-controls="collapse<?php echo $index; ?>">
+                    <b>Nombre Completo:</b> <?php echo htmlspecialchars($cliente['nombre'] . ' ' . $cliente['apelldio']); ?>
+                      <p><b>Cel:</b> <?php echo htmlspecialchars($cliente['cel']); ?></p>
+                    <p><b>Correo:</b> <?php echo htmlspecialchars($cliente['correo']); ?></p>
+                    <p><b>F.Creación:</b> <?php echo htmlspecialchars($cliente['fecha_registro']); ?></p>
+        </div>
+            </h2>
+        </div>
+    <?php endforeach; ?>
+        </div>
+    </div>
+
     <section>
         <div class="overflow-hidden bg-white rounded-md">
             <table
@@ -81,35 +56,24 @@ $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             class=" border-neutral-200 px-6 py-4 dark:border-white/10">
 
                         </th>
-                        <th
-                            scope="col"
-                            class=" border-neutral-200 px-6 py-4 dark:border-white/10">
-                            Nombre
-                        </th>
-                        <th scope="col" class="px-6 py-4">Apellido</th>
-                        <th scope="col" class="px-6 py-4">Cel/telefono</th>
-                        <th scope="col" class="px-6 py-4">Correo</th>
-                        <th scope="col" class="px-6 py-4">F.Creacion</th>
+
+                        <th scope="col" class="px-6 py-4">F. factura</th>
+                        <th scope="col" class="px-6 py-4">Total</th>
+
                     </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($resultados as $cliente): ?>
-            <tr class="border-neutral-200 dark:border-white/10">
-                <td class="whitespace-nowrap flex gap-2 border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                    <button class="py-1 px-3 rounded-md bg-yellow-600 text-white hover:bg-yellow-500 transition-all duration-200">Editar</button>
-                    <form action="" method="POST" style="display:inline;">
-                        <input type="hidden" name="cliente_id" value="<?php echo htmlspecialchars($cliente['id']); ?>">
-                        <button type="submit" class="py-1 px-3 rounded-md bg-red-600 text-white hover:bg-red-500 transition-all duration-200">Eliminar</button>
-                    </form>
-                    <a href="?page=historialCliente" class="py-1 px-3 rounded-md bg-blue-600 text-white hover:bg-blue-500 transition-all duration-200">Pedido</a>
-                </td>
-                <td class="whitespace-nowrap border-neutral-200 px-6 py-4 dark:border-white/10"><?php echo htmlspecialchars($cliente['nombre']); ?></td>
-                <td class="whitespace-nowrap border-neutral-200 px-6 py-4 dark:border-white/10"><?php echo htmlspecialchars($cliente['apelldio']); ?></td>
-                <td class="whitespace-nowrap px-6 py-4"><?php echo htmlspecialchars($cliente['cel']); ?></td>
-                <td class="whitespace-nowrap px-6 py-4"><?php echo htmlspecialchars($cliente['correo']); ?></td>
-                <td class="whitespace-nowrap px-6 py-4"><?php echo htmlspecialchars($cliente['fecha_registro']); ?></td>
-            </tr>
-        <?php endforeach; ?>
+                    <tr class=" border-neutral-200 dark:border-white/10">
+                        <td
+                            class="whitespace-nowrap flex gap-2 border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
+                            <button class="py-1 px-3 rounded-md bg-zinc-600 text-white hover:bg-zinc-500 transition-all duration-200">Factura</button>
+
+                        </td>
+
+                        <td class="whitespace-nowrap px-6 py-4">12/07/12</td>
+                        <td class="whitespace-nowrap px-6 py-4">120.00</td>
+                    </tr>
+
                 </tbody>
             </table>
         </div>
@@ -155,34 +119,41 @@ $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         <button class="py-1 px-3 rounded-t-md bg-blue-600 text-white hover:bg-blue-500 transition-all duration-200">Pedido</button>
 
-        <form method="POST" class="bg-white h-full p-4">
-            <div class="rounded-b-md rounded-tr-md text-sm grid grid-cols-5 gap-4 h-auto">
+        <div class="bg-white h-full p-4">
+            <div class=" rounded-b-md rounded-tr-md text-sm grid grid-cols-5 gap-4 h-auto">
                 <div class="flex flex-col col-span-2">
                     <label for="nombre" class="font-bold mb-1">Nombre: </label>
-                    <input id="nombre" name="nombre" type="text" class="bg-zinc-200 focus:outline-none rounded-md py-1 pl-3" required>
+                    <input id="nombre" type="text" class="bg-zinc-200 focus:outline-none rounded-md py-1 pl-3">
                 </div>
                 <div class="flex flex-col col-span-2">
                     <label for="apellido" class="font-bold mb-1">Apellido: </label>
-                    <input id="apellido" name="apellido" type="text" class="bg-zinc-200 focus:outline-none rounded-md py-1 pl-3" required>
+                    <input id="apellido" type="text" class="bg-zinc-200 focus:outline-none rounded-md py-1 pl-3">
                 </div>
                 <div class="flex flex-col col-span-1">
                     <label for="telefono" class="font-bold mb-1">Celular/Telefono: </label>
-                    <input id="telefono" name="telefono" type="text" class="bg-zinc-200 focus:outline-none rounded-md py-1 pl-3" required>
+                    <input id="telefono" type="text" class="bg-zinc-200 focus:outline-none rounded-md py-1 pl-3">
                 </div>
                 <div class="flex flex-col col-span-2">
                     <label for="correo" class="font-bold mb-1">Correo: </label>
-                    <input id="correo" name="correo" type="email" class="bg-zinc-200 focus:outline-none rounded-md py-1 pl-3" required>
+                    <input id="correo" type="text" class="bg-zinc-200 focus:outline-none rounded-md py-1 pl-3">
                 </div>
+
+
             </div>
             <div class="flex gap-4">
-                <button type="submit" class="flex col-span-5 mt-4 py-1 px-3 bg-blue-600 text-white rounded-md hover:bg-blue-500 transition-all duration-200">
+                <button id="closeModal" class="flex col-span-5 mt-4 py-1 px-3 bg-blue-600 text-white rounded-md hover:bg-blue-500 transition-all duration-200">
                     Crear
                 </button>
-                <button type="button" id="closeModal" class="flex col-span-5 mt-4 py-1 px-3 bg-red-600 text-white rounded-md hover:bg-red-500 transition-all duration-200">
+                <button id="closeModal" class="flex col-span-5 mt-4 py-1 px-3 bg-red-600 text-white rounded-md hover:bg-red-500 transition-all duration-200">
                     Cerrar
                 </button>
             </div>
-        </form>
+
+
+        </div>
+
+
+
     </div>
 </div>
 <style>
@@ -190,11 +161,21 @@ $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
         display: grid;
         min-height: 88vh;
         grid-template-rows:
-            auto 1fr auto;
+            auto auto 1fr auto;
+    }
+
+    #accordionContent {
+        max-height: 0;
+        transition: max-height 0.3s ease;
+    }
+
+    #accordionContent.open {
+        max-height: 200px;
     }
 </style>
 
 <script>
+    // modal
     const openModal = document.getElementById('openModal');
     const closeModal = document.getElementById('closeModal');
     const modal = document.getElementById('crear');
@@ -211,5 +192,15 @@ $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
         if (event.target === modal) {
             modal.classList.add('hidden');
         }
+    });
+    // acordeon
+    const accordionButton = document.getElementById('accordionButton');
+    const accordionContent = document.getElementById('accordionContent');
+    const accordionIcon = document.getElementById('accordionIcon');
+
+    accordionButton.addEventListener('click', () => {
+        accordionContent.classList.toggle('open');
+        accordionIcon.classList.toggle('fa-caret-down');
+        accordionIcon.classList.toggle('fa-caret-up');
     });
 </script>

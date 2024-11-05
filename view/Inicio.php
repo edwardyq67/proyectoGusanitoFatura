@@ -7,12 +7,6 @@
     <title>Inicio</title>
 </head>
 <body>
-<section>
-  <button>Crear</button>
-  <form action="">
-    <label for="Buscar">Buscar: </label>
-    <input id="Buscar" type="text" class="bg-zinc-200 focus:outline-none">
-  </form>
-</section>
+Inicio
 </body>
 </html>
